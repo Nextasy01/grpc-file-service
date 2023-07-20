@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package file.service;
+
+option go_package ="github.com/Nextasy01/grpc-file-service/pb";
+
+import "file_message.proto";
+import "user_message.proto";
+
+message ListFilesRequest{
+    Owner user = 1;
+}
+
+message ListFilesResponse{
+    File file = 1;
+}
+
+message UploadFileRequest{
+    File file = 1;
+    bytes chunk = 2;
+}
+
+message UploadFileResponse{
+    File file = 1;
+    uint32 size = 2;
+}
+
+message DownloadFileRequest{
+    string fileId = 1;
+}
+
+message DownloadFileResponse{
+    bytes chunk = 2;
+}
+
+service FileService{
+    rpc Upload(stream UploadFileRequest) returns(UploadFileResponse);
+    rpc Download(DownloadFileRequest) returns(stream DownloadFileResponse);
+    rpc List(ListFilesRequest) returns(stream ListFilesResponse);
+}

@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package file.service;
+
+option go_package ="github.com/Nextasy01/grpc-file-service/pb";
+
+message Owner{
+    // ID of the User
+    uint32 id = 1;
+
+    // Name of the User
+    string name = 2;
+    string password = 3;
+}

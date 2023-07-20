@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package file.service;
+
+option go_package ="github.com/Nextasy01/grpc-file-service/pb";
+
+import "google/protobuf/timestamp.proto";
+import "user_message.proto";
+
+message File{
+    // ID of the file
+    string id = 1;
+
+    // Name of the file
+    string title = 2;
+
+    // Size of the file in bytes
+    double size = 3;
+
+    // User who uploaded the file
+    Owner owner = 4;
+
+    // Timestamp
+    google.protobuf.Timestamp created_at = 5;
+    google.protobuf.Timestamp updated_at = 6;
+
+}
