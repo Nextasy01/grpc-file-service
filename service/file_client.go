@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"sync/atomic"
 	"time"
 
@@ -187,7 +188,8 @@ func (fileClient *FileClient) Download(id string) {
 	randID, _ := uuid.NewUUID()        // since NewUUID based on current time, multiple goroutines may execute at the same time leading on the same UUID
 
 	newFileName := randID.String() + "-" + md.Get("title")[0]
-	f, err := os.Create("temp_files/" + newFileName)
+	filePath := filepath.Join("temp_files", newFileName)
+	f, err := os.Create(filePath)
 	if err != nil {
 		log.Printf("Couldn't create file: %v", err)
 		return

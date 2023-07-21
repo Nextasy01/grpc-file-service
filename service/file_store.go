@@ -38,7 +38,9 @@ func (store *InMemoryFileStore) Save(file *pb.File, data bytes.Buffer) error {
 
 	fileId, _ := uuid.NewRandom()
 	fileType := filepath.Ext(file.GetTitle()) //strings.Split(file.GetTitle(), ".")[1]
-	filePath := fmt.Sprintf("%s/%s%s", store.fileFolder, fileId, fileType)
+	fileName := fmt.Sprintf("%s%s", fileId, fileType)
+	filePath := filepath.Join(store.fileFolder, fileName)
+	// filePath := fmt.Sprintf("%s/%s%s", store.fileFolder, fileId, fileType)
 	file.Id = fileId.String()
 	file.Title = filepath.Base(file.GetTitle())
 
