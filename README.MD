@@ -3,7 +3,6 @@
 ## Usage
 On Linux execute following commands:
 ```
-make start
 make server
 make client_upload
 make client_list
