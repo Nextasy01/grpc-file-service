@@ -38,6 +38,15 @@ func (store *InMemoryFileStore) Save(file *pb.File, data bytes.Buffer) error {
 
 	fileId, _ := uuid.NewRandom()
 	fileType := filepath.Ext(file.GetTitle()) //strings.Split(file.GetTitle(), ".")[1]
+
+	// create folder/directory if not exists
+	if _, err := os.Stat(store.fileFolder); errors.Is(err, os.ErrNotExist) {
+		err := os.Mkdir(store.fileFolder, os.ModePerm)
+		if err != nil {
+			return err
+		}
+	}
+
 	fileName := fmt.Sprintf("%s%s", fileId, fileType)
 	filePath := filepath.Join(store.fileFolder, fileName)
 	// filePath := fmt.Sprintf("%s/%s%s", store.fileFolder, fileId, fileType)

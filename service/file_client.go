@@ -3,6 +3,7 @@ package service
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -187,8 +188,18 @@ func (fileClient *FileClient) Download(id string) {
 	time.Sleep(500 * time.Millisecond) // this is needed to surely randomize new generated UUID
 	randID, _ := uuid.NewUUID()        // since NewUUID based on current time, multiple goroutines may execute at the same time leading on the same UUID
 
+	downloadFolder := "temp_files"
+
+	// create folder/directory if not exists
+	if _, err := os.Stat(downloadFolder); errors.Is(err, os.ErrNotExist) {
+		err := os.Mkdir(downloadFolder, os.ModePerm)
+		if err != nil {
+			log.Printf("Couldn't create download folder: %v", err)
+		}
+	}
+
 	newFileName := randID.String() + "-" + md.Get("title")[0]
-	filePath := filepath.Join("temp_files", newFileName)
+	filePath := filepath.Join(downloadFolder, newFileName)
 	f, err := os.Create(filePath)
 	if err != nil {
 		log.Printf("Couldn't create file: %v", err)
