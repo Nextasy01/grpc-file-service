@@ -36,9 +36,11 @@ func authMethods() map[string]bool {
 
 func main() {
 	serverAddress := flag.String("address", "", "the server address")
-	fileToUploadPath := flag.String("upload", "", "file path in your system")
-	numOfConcurrentRequests := flag.Int("num", 10, "number of concurrent request for upload/download")
-	// fileToDownloadId := flag.String("download", "", "id of the file to download")
+
+	fileToUploadPath := flag.String("u", "", "file path in your system")
+	fileToDownloadId := flag.String("d", "", "id of the file to download")
+	numOfConcurrentRequests := flag.Int("num", 1, "number of concurrent request for upload/download")
+	fileOption := flag.String("option", "list", "upload, list, download")
 	clientNum := flag.String("test", "1", "for testing")
 	flag.Parse()
 
@@ -73,19 +75,43 @@ func main() {
 
 	fileClient := service.NewFileClient(cc2)
 	if *clientNum == "1" {
-		testUploadFile(fileClient, username, *fileToUploadPath, *numOfConcurrentRequests)
-		testListFiles(fileClient, username)
+		switch *fileOption {
+		case "upload":
+			testUploadFile(fileClient, username, *fileToUploadPath, *numOfConcurrentRequests)
+		case "list":
+			testListFiles(fileClient, username)
+		case "download":
+			testDownloadFile(fileClient, *fileToDownloadId, *numOfConcurrentRequests)
+		default:
+			log.Fatal("Invalid option")
+		}
 
 	} else { // in case you need one more client or more
-		testUploadFile(fileClient, username1, *fileToUploadPath, *numOfConcurrentRequests)
-		testListFiles(fileClient, username1)
+		switch *fileOption {
+		case "upload":
+			testUploadFile(fileClient, username1, *fileToUploadPath, *numOfConcurrentRequests)
+		case "list":
+			testListFiles(fileClient, username1)
+		case "download":
+			testDownloadFile(fileClient, *fileToDownloadId, *numOfConcurrentRequests)
+		default:
+			log.Fatal("Invalid option")
+		}
 	}
 
-	// testDownloadFile(fileClient, *fileToDownloadId)
 }
 
-func testDownloadFile(fc *service.FileClient, path string) {
-	fc.Download(path)
+func testDownloadFile(fc *service.FileClient, path string, num int) {
+	var wg sync.WaitGroup
+
+	for i := 0; i < num; i++ {
+		wg.Add(1)
+		go func(i int) {
+			fc.Download(path)
+			wg.Done()
+		}(i)
+	}
+	wg.Wait()
 }
 
 func testUploadFile(fc *service.FileClient, name, path string, num int) {
@@ -94,18 +120,11 @@ func testUploadFile(fc *service.FileClient, name, path string, num int) {
 	for i := 0; i < num; i++ {
 		wg.Add(1)
 		go func(i int) {
-			// if i >= 10 {
-			// 	time.Sleep(3 * time.Second)
-			// }
 			fc.UploadFile(&pb.Owner{Name: name}, path)
 			wg.Done()
 		}(i)
 	}
 	wg.Wait()
-
-	// fc.UploadFile(&pb.Owner{Name: name}, "E:/temp/books.csv")
-	// fc.UploadFile(&pb.Owner{Name: name}, "E:/temp/test.png")
-	// fc.UploadFile(&pb.Owner{Name: name}, "E:/temp/resume.pdf")
 }
 
 func testListFiles(fc *service.FileClient, name string) {

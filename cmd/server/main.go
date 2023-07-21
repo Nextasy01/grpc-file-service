@@ -67,7 +67,14 @@ func main() {
 	if err != nil {
 		log.Fatal("cannot seed users")
 	}
-	jwtManager := service.NewJWTManager(os.Getenv("Secret_Key"), 15*time.Minute)
+
+	var jwtManager *service.JWTManager
+	if os.Getenv("Secret_Key") == "" {
+		jwtManager = service.NewJWTManager("secret", 15*time.Minute)
+	} else {
+		jwtManager = service.NewJWTManager(os.Getenv("Secret_Key"), 15*time.Minute)
+	}
+
 	authServer := service.NewAuthServer(userStore, jwtManager)
 	authInterceptor := service.NewAuthInterceptor(jwtManager, accessibleMethods())
 

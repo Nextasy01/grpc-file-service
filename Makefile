@@ -4,13 +4,16 @@ gen:
 clean:
 	rm pb/*.go
 
+clear:
+	rm files/* && rm temp_files/*
+
 server:
 	go run cmd/server/main.go -port 9000
 
-client: 
-	go run cmd/client/main.go -address 0.0.0.0:9000
+client_upload:
+	go run cmd/client/main.go -address 0.0.0.0:9000 -test 1 -option upload -u moon.jpg -num 20
 
-client_test_upload_limit:
-	go run cmd/client/main.go -address 0.0.0.0:9000 -test 1 -num 20 -upload moon.png
+client_list:
+	go run cmd/client/main.go -address 0.0.0.0:9000 -test 1 -option list
 
-.PHONY: gen clean server client
+.PHONY: gen clean server

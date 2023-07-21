@@ -147,12 +147,15 @@ func (fileClient *FileClient) UploadFile(user *pb.Owner, path string) {
 }
 
 func (fileClient *FileClient) Download(id string) {
-	currentCount := fileClient.requestCount.Add(1) // incrementing concurent request count
+	fileClient.requestCount.Add(1) // incrementing concurent request count
 	defer fileClient.requestCount.Add(-1)
 
-	if currentCount > downloadLimit {
-		log.Printf("Download limit(%d) is exceeded. You can upload only up to 10 files at once, please wait while other files finish downloading", downloadLimit)
-		return
+	for {
+		if fileClient.requestCount.Load() > downloadLimit {
+			log.Printf("Download limit(%d) is exceeded. You can upload only up to 10 files at once, please wait while other files finish downloading", downloadLimit)
+		} else {
+			break
+		}
 	}
 	log.Println("Starting to download the file")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -180,8 +183,11 @@ func (fileClient *FileClient) Download(id string) {
 
 	log.Println("Creating new file")
 
-	f, err := os.Create("temp_files/" + md.Get("title")[0])
+	time.Sleep(500 * time.Millisecond) // this is needed to surely randomize new generated UUID
+	randID, _ := uuid.NewUUID()        // since NewUUID based on current time, multiple goroutines may execute at the same time leading on the same UUID
 
+	newFileName := randID.String() + "-" + md.Get("title")[0]
+	f, err := os.Create("temp_files/" + newFileName)
 	if err != nil {
 		log.Printf("Couldn't create file: %v", err)
 		return
@@ -195,7 +201,7 @@ func (fileClient *FileClient) Download(id string) {
 		return
 	}
 
-	log.Printf("Successfully downloaded file with name: %s and size: %s bytes!", md.Get("title")[0], md.Get("size")[0])
+	log.Printf("Successfully downloaded file with name: %s and size: %s bytes!", newFileName, md.Get("size")[0])
 
 }
 
@@ -203,7 +209,7 @@ func copyFromResponse(w *io.PipeWriter, stream pb.FileService_DownloadClient) {
 	var err error
 	res := new(pb.DownloadFileResponse)
 	for {
-		log.Println("receiving data from server")
+		// log.Println("receiving data from server")
 		err = stream.RecvMsg(res)
 		if err == io.EOF {
 			_ = w.Close()
@@ -215,8 +221,7 @@ func copyFromResponse(w *io.PipeWriter, stream pb.FileService_DownloadClient) {
 			return
 		}
 		if len(res.GetChunk()) > 0 {
-			n, err := w.Write(res.Chunk)
-			log.Printf("Wrote %d bytes to a file", n)
+			_, err := w.Write(res.Chunk)
 			if err != nil {
 				log.Printf("Couldn't write to a file: %v", err)
 				_ = stream.CloseSend()

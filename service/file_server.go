@@ -187,12 +187,14 @@ func (server *FileServer) Download(req *pb.DownloadFileRequest, stream pb.FileSe
 
 	fileToSend := NewFile()
 
-	fileToSend.Path = "../files/" + file.GetId() + "." + strings.Split(file.GetTitle(), ".")[1]
+	fileToSend.Path = "files/" + file.GetId() + "." + strings.Split(file.GetTitle(), ".")[1]
 
 	f, err := os.Open(fileToSend.Path)
 	if err != nil {
 		return err
 	}
+
+	defer f.Close()
 
 	res := &pb.DownloadFileResponse{Chunk: make([]byte, maxChunkSize)}
 	var n int
