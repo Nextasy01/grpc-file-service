@@ -55,7 +55,7 @@ func TestEverything(t *testing.T) {
 		File: &pb.File{
 			Id:        newId.String(),
 			Title:     file.Name(),
-			Size:      float64(fileSize),
+			Size:      uint64(fileSize),
 			CreatedAt: timestamppb.Now(),
 			UpdatedAt: timestamppb.Now(),
 			Owner: &pb.Owner{
@@ -122,7 +122,7 @@ func TestEverything(t *testing.T) {
 		// defer require.NoError(t, r.Close())
 		defer r.Close()
 
-		newFilePath := downloadFolder + "/" + md.Get("title")[0]
+		newFilePath := fmt.Sprintf("%s/%s", downloadFolder, md.Get("title")[0])
 		// go routine to receive responses
 		go copyFromResponse(t, w, stream)
 

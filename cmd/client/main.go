@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"sync"
 	"time"
@@ -28,9 +29,9 @@ func authMethods() map[string]bool {
 	const fileServicePath = "/file.service.FileService/"
 
 	return map[string]bool{
-		fileServicePath + "Upload":   true,
-		fileServicePath + "Download": true,
-		fileServicePath + "List":     true,
+		fmt.Sprintf("%sUpload", fileServicePath):   true,
+		fmt.Sprintf("%sDownload", fileServicePath): true,
+		fmt.Sprintf("%sList", fileServicePath):     true,
 	}
 }
 

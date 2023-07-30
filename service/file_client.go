@@ -19,8 +19,10 @@ import (
 )
 
 type FileClient struct {
-	service      pb.FileServiceClient
-	requestCount atomic.Int32
+	service              pb.FileServiceClient
+	requestUploadCount   atomic.Int32
+	requestDownloadCount atomic.Int32
+	requestListCount     atomic.Int32
 }
 
 func NewFileClient(cc *grpc.ClientConn) *FileClient {
@@ -29,11 +31,11 @@ func NewFileClient(cc *grpc.ClientConn) *FileClient {
 }
 
 func (fileClient *FileClient) ListFiles(user *pb.Owner) {
-	fileClient.requestCount.Add(1) // incrementing concurent request count
-	defer fileClient.requestCount.Add(-1)
+	fileClient.requestListCount.Add(1) // incrementing concurent request count
+	defer fileClient.requestListCount.Add(-1)
 
 	for {
-		if fileClient.requestCount.Load() > listLimit {
+		if fileClient.requestListCount.Load() > listLimit {
 			log.Printf("List limit(%d) is exceeded. Please wait while other files finish showing", listLimit)
 		} else {
 			break
@@ -67,11 +69,11 @@ func (fileClient *FileClient) ListFiles(user *pb.Owner) {
 }
 
 func (fileClient *FileClient) UploadFile(user *pb.Owner, path string) {
-	fileClient.requestCount.Add(1) // incrementing concurent request count
-	defer fileClient.requestCount.Add(-1)
+	fileClient.requestUploadCount.Add(1) // incrementing concurent request count
+	defer fileClient.requestUploadCount.Add(-1)
 
 	for {
-		if fileClient.requestCount.Load() > uploadLimit {
+		if fileClient.requestUploadCount.Load() > uploadLimit {
 			log.Printf("Upload limit(%d) is exceeded. Please wait while other files finish uploading", uploadLimit)
 		} else {
 			break
@@ -102,7 +104,7 @@ func (fileClient *FileClient) UploadFile(user *pb.Owner, path string) {
 		File: &pb.File{
 			Id:        newId.String(),
 			Title:     file.Name(),
-			Size:      float64(fileSize),
+			Size:      uint64(fileSize),
 			CreatedAt: timestamppb.Now(),
 			UpdatedAt: timestamppb.Now(),
 			Owner:     user,
@@ -149,11 +151,11 @@ func (fileClient *FileClient) UploadFile(user *pb.Owner, path string) {
 }
 
 func (fileClient *FileClient) Download(id string) {
-	fileClient.requestCount.Add(1) // incrementing concurent request count
-	defer fileClient.requestCount.Add(-1)
+	fileClient.requestDownloadCount.Add(1) // incrementing concurent request count
+	defer fileClient.requestDownloadCount.Add(-1)
 
 	for {
-		if fileClient.requestCount.Load() > downloadLimit {
+		if fileClient.requestDownloadCount.Load() > downloadLimit {
 			log.Printf("Download limit(%d) is exceeded. You can upload only up to 10 files at once, please wait while other files finish downloading", downloadLimit)
 		} else {
 			break
@@ -198,7 +200,7 @@ func (fileClient *FileClient) Download(id string) {
 		}
 	}
 
-	newFileName := randID.String() + "-" + md.Get("title")[0]
+	newFileName := fmt.Sprintf("%s-%s", randID.String(), md.Get("title")[0])
 	filePath := filepath.Join(downloadFolder, newFileName)
 	f, err := os.Create(filePath)
 	if err != nil {

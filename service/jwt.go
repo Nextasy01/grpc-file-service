@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type JWTManager struct {
@@ -13,7 +13,7 @@ type JWTManager struct {
 }
 
 type UserClaims struct {
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 	Username string `json:"username"`
 	Role     string `json:"role"`
 }
@@ -25,8 +25,8 @@ func NewJWTManager(key string, duration time.Duration) *JWTManager {
 // Generate generates and signs a new token for a user
 func (manager *JWTManager) Generate(user *User) (string, error) {
 	claims := UserClaims{
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(manager.tokenDuration).Unix(),
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(manager.tokenDuration)),
 		},
 		Username: user.Username,
 		Role:     user.Role,

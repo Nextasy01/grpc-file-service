@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -26,8 +27,10 @@ const (
 // File server that provides file services such as upload, list, etc
 type FileServer struct {
 	pb.UnimplementedFileServiceServer
-	fileStore    FileStore
-	requestCount atomic.Int32
+	fileStore            FileStore
+	requestUploadCount   atomic.Int32
+	requestDownloadCount atomic.Int32
+	requestListCount     atomic.Int32
 }
 
 func NewFileServer(fileStore FileStore) *FileServer {
@@ -36,11 +39,11 @@ func NewFileServer(fileStore FileStore) *FileServer {
 
 // Return list of uploaded files of client
 func (server *FileServer) List(req *pb.ListFilesRequest, stream pb.FileService_ListServer) error {
-	server.requestCount.Add(1) // incrementing concurent request count
-	defer server.requestCount.Add(-1)
+	server.requestListCount.Add(1) // incrementing concurent request count
+	defer server.requestListCount.Add(-1)
 
 	for {
-		if server.requestCount.Load() > listLimit {
+		if server.requestListCount.Load() > listLimit {
 			log.Printf("List limit(%d) is exceeded. Waiting for other files finish showing", listLimit)
 		} else {
 			break
@@ -73,11 +76,11 @@ func (server *FileServer) List(req *pb.ListFilesRequest, stream pb.FileService_L
 
 // Uploads a file from client to server
 func (server *FileServer) Upload(stream pb.FileService_UploadServer) error {
-	server.requestCount.Add(1) // incrementing concurent request count
-	defer server.requestCount.Add(-1)
+	server.requestUploadCount.Add(1) // incrementing concurent request count
+	defer server.requestUploadCount.Add(-1)
 
 	for {
-		if server.requestCount.Load() > uploadLimit {
+		if server.requestUploadCount.Load() > uploadLimit {
 			log.Printf("Upload limit(%d) is exceeded. Waiting for other uploads to finish", uploadLimit)
 		} else {
 			break
@@ -94,10 +97,8 @@ func (server *FileServer) Upload(stream pb.FileService_UploadServer) error {
 
 	file := NewFile()
 
-	var fileSize uint32
-	fileSize = 0.0
-
-	defer file.Output.Close()
+	var fileSize uint64
+	fileSize = 0
 
 	for {
 		err := contextError(stream.Context())
@@ -119,7 +120,7 @@ func (server *FileServer) Upload(stream pb.FileService_UploadServer) error {
 		}
 
 		chunk := req.GetChunk()
-		fileSize += uint32(len(chunk))
+		fileSize += uint64(len(chunk))
 
 		log.Printf("Receive a chunk with size: %d", len(chunk))
 
@@ -160,11 +161,11 @@ func (server *FileServer) Upload(stream pb.FileService_UploadServer) error {
 
 // downloads file from server and returns it to client
 func (server *FileServer) Download(req *pb.DownloadFileRequest, stream pb.FileService_DownloadServer) error {
-	server.requestCount.Add(1) // incrementing concurent request count
-	defer server.requestCount.Add(-1)
+	server.requestDownloadCount.Add(1) // incrementing concurent request count
+	defer server.requestDownloadCount.Add(-1)
 
 	for {
-		if server.requestCount.Load() > downloadLimit {
+		if server.requestDownloadCount.Load() > downloadLimit {
 			log.Printf("Download limit(%d) is exceeded. Waiting for other files finish downloading", downloadLimit)
 		} else {
 			break
@@ -187,7 +188,7 @@ func (server *FileServer) Download(req *pb.DownloadFileRequest, stream pb.FileSe
 
 	fileToSend := NewFile()
 
-	fileToSend.Path = "files/" + file.GetId() + "." + strings.Split(file.GetTitle(), ".")[1]
+	fileToSend.Path = fmt.Sprintf("files/%s.%s", file.GetId(), strings.Split(file.GetTitle(), ".")[1])
 
 	f, err := os.Open(fileToSend.Path)
 	if err != nil {

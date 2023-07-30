@@ -26,9 +26,9 @@ func accessibleMethods() map[string][]string {
 	const fileServicePath = "/file.service.FileService/"
 
 	return map[string][]string{
-		fileServicePath + "Upload":   {"admin"},
-		fileServicePath + "Download": {"admin"},
-		fileServicePath + "List":     {"admin"},
+		fmt.Sprintf("%sUpload", fileServicePath):   {"admin"},
+		fmt.Sprintf("%sDownload", fileServicePath): {"admin"},
+		fmt.Sprintf("%sList", fileServicePath):     {"admin"},
 	}
 }
 

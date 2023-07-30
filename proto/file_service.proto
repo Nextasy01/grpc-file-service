@@ -22,7 +22,7 @@ message UploadFileRequest{
 
 message UploadFileResponse{
     File file = 1;
-    uint32 size = 2;
+    uint64 size = 2;
 }
 
 message DownloadFileRequest{

@@ -15,7 +15,7 @@ message File{
     string title = 2;
 
     // Size of the file in bytes
-    double size = 3;
+    uint64 size = 3;
 
     // User who uploaded the file
     Owner owner = 4;

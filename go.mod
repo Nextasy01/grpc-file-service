@@ -3,7 +3,6 @@ module github.com/Nextasy01/grpc-file-service
 go 1.19
 
 require (
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/google/uuid v1.3.0
 	github.com/joho/godotenv v1.5.1
 	github.com/stretchr/testify v1.8.4
@@ -24,4 +23,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-require google.golang.org/grpc v1.56.2
+require (
+	github.com/golang-jwt/jwt/v5 v5.0.0
+	google.golang.org/grpc v1.56.2
+)
